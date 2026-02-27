@@ -77,23 +77,6 @@
       --progress-bar-height: 2px;
     }
 
-    /* Tour status bar */
-    .tour-bar {
-      display: none; align-items: center; gap: 8px;
-      padding: 8px 16px; background: rgba(16,124,16,0.05);
-      border-top: 1px solid rgba(16,124,16,0.15); flex-shrink: 0;
-    }
-    .tour-bar.active { display: flex; }
-    .tour-label { font-size: 11px; font-weight: 600; color: var(--green); flex: 1; }
-    .tour-step { font-size: 10px; color: var(--muted); }
-    .tour-stop {
-      font-size: 10px; font-weight: 600; padding: 3px 10px;
-      border-radius: 4px; border: 1px solid var(--border);
-      background: white; cursor: pointer; color: var(--muted);
-      transition: all 0.15s;
-    }
-    .tour-stop:hover { color: #dc2626; border-color: #dc2626; }
-
     /* Toolbar */
     .viewer-toolbar {
       display: flex; align-items: center; gap: 5px;
@@ -215,21 +198,6 @@
     }
     .pill:hover { border-color: var(--green); color: var(--green); }
     .pill.active { border-color: var(--green); background: var(--green); color: white; }
-
-    /* ── VIEW ANIMATION BUTTONS ── */
-    .vanim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .vanim-btn {
-      display: flex; flex-direction: column; align-items: flex-start;
-      gap: 3px; padding: 10px 11px;
-      border-radius: 8px; border: 1px solid var(--border);
-      background: var(--white); color: var(--text);
-      cursor: pointer; transition: all 0.18s; text-align: left;
-    }
-    .vanim-btn:hover { border-color: var(--green); background: var(--green-lt); }
-    .vanim-btn.running { border-color: var(--green); background: var(--green-lt); }
-    .vanim-title { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.2; }
-    .vanim-sub { font-size: 10px; color: var(--muted); line-height: 1.3; }
-    .vanim-btn:hover .vanim-title, .vanim-btn.running .vanim-title { color: var(--green); }
 
     /* ── GLB ANIM BUTTONS (for your Blender NLA clips) ── */
     .anim-btn {
@@ -378,13 +346,6 @@
       </button>
       <div id="ar-prompt"><img src="ar_hand_prompt.png" alt=""></div>
     </model-viewer>
-
-    <!-- Tour status bar -->
-    <div class="tour-bar" id="tour-bar">
-      <span class="tour-label" id="tour-label">● Auto Tour Running</span>
-      <span class="tour-step" id="tour-step">Step 1 / 8</span>
-      <button class="tour-stop" onclick="stopTour()">Stop</button>
-    </div>
 
     <!-- Camera toolbar -->
     <div class="viewer-toolbar">
@@ -747,135 +708,6 @@
     speedIdx = (speedIdx+1) % speeds.length;
     mv.timeScale = speeds[speedIdx];
     document.getElementById('speed-btn').textContent = speeds[speedIdx]+'×';
-  }
-
-  // ── VIEW ANIMATION ENGINE (camera tours — no GLB needed) ──
-  let tourTimer = null;
-
-  function stopTour() {
-    if (tourTimer) { clearTimeout(tourTimer); tourTimer = null; }
-    document.getElementById('tour-bar').classList.remove('active');
-    document.querySelectorAll('.vanim-btn').forEach(b => b.classList.remove('running'));
-    mv.autoRotate = document.getElementById('autorotate').checked;
-  }
-
-  function runSequence(steps, btnId, labelText) {
-    stopTour();
-    mv.autoRotate = false;
-    const bar = document.getElementById('tour-bar');
-    const lbl = document.getElementById('tour-label');
-    const stepEl = document.getElementById('tour-step');
-    bar.classList.add('active');
-    lbl.textContent = '● ' + labelText;
-    const btn = document.getElementById(btnId);
-    if (btn) btn.classList.add('running');
-    let i = 0;
-    function next() {
-      if (i >= steps.length) { stopTour(); return; }
-      stepEl.textContent = `Step ${i+1} / ${steps.length}`;
-      const s = steps[i];
-      mv.cameraOrbit = s.orbit;
-      mv.fieldOfView = s.fov || '28deg';
-      if (s.label) lbl.textContent = '● ' + s.label;
-      i++;
-      tourTimer = setTimeout(next, s.duration || 2200);
-    }
-    next();
-  }
-
-  function runTour() {
-    runSequence([
-      { orbit: '0deg 75deg 0.38m',   fov: '32deg', label: 'Front Face',       duration: 2500 },
-      { orbit: '45deg 65deg 0.34m',  fov: '28deg', label: 'Right Quarter',    duration: 2200 },
-      { orbit: '90deg 75deg 0.34m',  fov: '26deg', label: 'Right Side',       duration: 2200 },
-      { orbit: '160deg 70deg 0.36m', fov: '28deg', label: 'Rear View',        duration: 2500 },
-      { orbit: '225deg 75deg 0.34m', fov: '26deg', label: 'Left Side',        duration: 2200 },
-      { orbit: '315deg 65deg 0.34m', fov: '28deg', label: 'Left Quarter',     duration: 2200 },
-      { orbit: '0deg 10deg 0.36m',   fov: '25deg', label: 'Top Down',         duration: 2500 },
-      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Complete ✓', duration: 2000 },
-    ], 'va-tour', 'Auto Tour');
-  }
-
-  function runExplodedTour() {
-    runSequence([
-      { orbit: '-90deg 75deg 0.22m',  fov: '18deg', label: 'Left Grip Zone',       duration: 2800 },
-      { orbit: '-60deg 85deg 0.20m',  fov: '16deg', label: 'D-Pad & Left Stick',   duration: 2800 },
-      { orbit: '-10deg 78deg 0.20m',  fov: '15deg', label: 'Center / Guide Button',duration: 2800 },
-      { orbit: '30deg 78deg 0.20m',   fov: '15deg', label: 'A·B·X·Y Cluster',      duration: 2800 },
-      { orbit: '90deg 75deg 0.22m',   fov: '18deg', label: 'Right Grip Zone',       duration: 2800 },
-      { orbit: '-30deg 100deg 0.22m', fov: '18deg', label: 'L2 Trigger Detail',     duration: 2800 },
-      { orbit: '30deg 100deg 0.22m',  fov: '18deg', label: 'R2 Trigger Detail',     duration: 2800 },
-      { orbit: '180deg 75deg 0.24m',  fov: '20deg', label: 'Battery Compartment',  duration: 2800 },
-      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',           duration: 2000 },
-    ], 'va-explode', 'Exploded View Tour');
-  }
-
-  function runDramaticReveal() {
-    runSequence([
-      { orbit: '180deg 90deg 0.60m',  fov: '40deg', label: 'Reveal Starting…',  duration: 1200 },
-      { orbit: '120deg 80deg 0.45m',  fov: '34deg', label: 'Coming Into View',   duration: 1400 },
-      { orbit: '60deg 74deg 0.36m',   fov: '28deg', label: 'Approaching…',       duration: 1400 },
-      { orbit: '10deg 70deg 0.28m',   fov: '22deg', label: 'Close Detail',       duration: 2500 },
-      { orbit: '-20deg 68deg 0.26m',  fov: '20deg', label: 'Intimate View',      duration: 2000 },
-      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Reveal Complete ✓', duration: 2000 },
-    ], 'va-reveal', 'Dramatic Reveal');
-  }
-
-  function runTriggerInspect() {
-    runSequence([
-      { orbit: '-30deg 102deg 0.24m', fov: '17deg', label: 'L1 Bumper',       duration: 2800 },
-      { orbit: '-35deg 108deg 0.22m', fov: '15deg', label: 'L2 Trigger Face', duration: 2800 },
-      { orbit: '35deg 108deg 0.22m',  fov: '15deg', label: 'R2 Trigger Face', duration: 2800 },
-      { orbit: '30deg 102deg 0.24m',  fov: '17deg', label: 'R1 Bumper',       duration: 2800 },
-      { orbit: '0deg 95deg 0.26m',    fov: '20deg', label: 'Both Triggers',   duration: 2500 },
-      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',      duration: 1800 },
-    ], 'va-triggers', 'Trigger Inspection');
-  }
-
-  function runButtonInspect() {
-    runSequence([
-      { orbit: '35deg 72deg 0.22m',   fov: '16deg', label: 'Button A (Green)',  duration: 2800 },
-      { orbit: '45deg 65deg 0.22m',   fov: '15deg', label: 'Button B (Red)',    duration: 2800 },
-      { orbit: '28deg 78deg 0.20m',   fov: '14deg', label: 'Button X (Blue)',   duration: 2800 },
-      { orbit: '22deg 68deg 0.20m',   fov: '14deg', label: 'Button Y (Yellow)', duration: 2800 },
-      { orbit: '30deg 72deg 0.26m',   fov: '20deg', label: 'Full Cluster',      duration: 2500 },
-      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',        duration: 1800 },
-    ], 'va-buttons', 'Face Button Inspection');
-  }
-
-  function run360Scan() {
-    runSequence([
-      { orbit: '0deg 75deg 0.34m',    fov: '27deg', label: '360° Scan — 0°',   duration: 1500 },
-      { orbit: '45deg 75deg 0.34m',   fov: '27deg', label: '360° Scan — 45°',  duration: 1500 },
-      { orbit: '90deg 75deg 0.34m',   fov: '27deg', label: '360° Scan — 90°',  duration: 1500 },
-      { orbit: '135deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 135°', duration: 1500 },
-      { orbit: '180deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 180°', duration: 1500 },
-      { orbit: '225deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 225°', duration: 1500 },
-      { orbit: '270deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 270°', duration: 1500 },
-      { orbit: '315deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 315°', duration: 1500 },
-      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: '360° Complete ✓', duration: 1800 },
-    ], 'va-360', '360° Scan');
-  }
-
-  function runTopDown() {
-    runSequence([
-      { orbit: '0deg 5deg 0.36m',     fov: '24deg', label: 'Top Layout',    duration: 3000 },
-      { orbit: '-45deg 8deg 0.34m',   fov: '22deg', label: 'Left Side Top', duration: 2500 },
-      { orbit: '45deg 8deg 0.34m',    fov: '22deg', label: 'Right Side Top',duration: 2500 },
-      { orbit: '0deg 30deg 0.32m',    fov: '22deg', label: 'Angled Top',    duration: 2500 },
-      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',   duration: 1800 },
-    ], 'va-topdown', 'Top Inspection');
-  }
-
-  function runBackPanel() {
-    runSequence([
-      { orbit: '180deg 75deg 0.34m',  fov: '26deg', label: 'Rear Face',          duration: 2800 },
-      { orbit: '180deg 85deg 0.28m',  fov: '22deg', label: 'Battery Cover',       duration: 2800 },
-      { orbit: '160deg 80deg 0.26m',  fov: '20deg', label: 'Left Grip Texture',  duration: 2800 },
-      { orbit: '200deg 80deg 0.26m',  fov: '20deg', label: 'Right Grip Texture', duration: 2800 },
-      { orbit: '180deg 92deg 0.28m',  fov: '22deg', label: 'Bottom Detail',       duration: 2800 },
-      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',         duration: 1800 },
-    ], 'va-backpanel', 'Back Panel Inspection');
   }
 
   // ── DISPLAY ──

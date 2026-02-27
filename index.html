@@ -1,432 +1,316 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <title>Xbox Controller — 3D Viewer</title>
+  <title>Xbox Wireless Controller — 3D Viewer</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --green:    #107c10;
       --green-lt: #e8f5e8;
-      --text:     #1a1a1a;
+      --green-dk: #0d6b0d;
+      --text:     #111827;
       --muted:    #6b7280;
       --border:   #e5e7eb;
       --bg:       #f3f4f6;
       --white:    #ffffff;
       --radius:   10px;
+      --shadow:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
     }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
 
-    html, body {
-      height: 100%;
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-    }
-
-    /* HEADER */
+    /* ── HEADER ── */
     header {
-      height: 56px;
-      background: var(--white);
+      height: 54px; background: var(--white);
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 28px;
-      gap: 10px;
+      display: flex; align-items: center;
+      padding: 0 24px; gap: 10px;
+      position: sticky; top: 0; z-index: 50;
     }
-
-    .xbox-logo {
-      width: 26px; height: 26px;
-      background: var(--green);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .xbox-logo svg { width: 14px; height: 14px; fill: white; }
-
-    .header-brand { font-size: 15px; font-weight: 600; }
+    .header-brand { font-size: 15px; font-weight: 600; color: var(--text); }
     .header-sep { flex: 1; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .hdr-btn {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+      padding: 5px 12px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--white);
+      color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .hdr-btn:hover { border-color: var(--green); color: var(--green); }
+    .hdr-btn.primary { background: var(--green); border-color: var(--green); color: white; }
+    .hdr-btn.primary:hover { background: var(--green-dk); }
 
-    /* LAYOUT */
+    /* ── LAYOUT ── */
     .layout {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 18px;
-      padding: 18px 22px;
-      height: calc(100vh - 56px);
+      display: grid; grid-template-columns: 1fr 340px;
+      gap: 16px; padding: 16px 20px;
+      height: calc(100vh - 54px);
     }
 
-    /* VIEWER CARD */
+    /* ── VIEWER CARD ── */
     .viewer-card {
-      background: var(--white);
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      background: var(--white); border-radius: 14px;
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      display: flex; flex-direction: column; overflow: hidden;
+      animation: fadeIn 0.4s ease;
     }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
     .viewer-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 13px 18px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
-
-    .viewer-label {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--muted);
-    }
-
+    .viewer-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
     .edition-badge {
-      font-size: 11px; font-weight: 600;
-      color: var(--green);
-      border: 1.5px solid var(--green);
-      border-radius: 999px;
-      padding: 3px 12px;
+      font-size: 11px; font-weight: 600; color: var(--green);
+      border: 1.5px solid var(--green); border-radius: 999px; padding: 3px 12px;
+      transition: all 0.3s;
     }
 
     model-viewer {
-      flex: 1;
-      width: 100%;
-      min-height: 0;
+      flex: 1; width: 100%; min-height: 0;
       --progress-bar-color: var(--green);
       --progress-bar-height: 2px;
     }
 
-    /* VIEW TOOLBAR */
-    .viewer-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 9px 14px;
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-      flex-wrap: wrap;
+    /* Tour status bar */
+    .tour-bar {
+      display: none; align-items: center; gap: 8px;
+      padding: 8px 16px; background: rgba(16,124,16,0.05);
+      border-top: 1px solid rgba(16,124,16,0.15); flex-shrink: 0;
     }
-
-    .view-btn {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.04em; text-transform: uppercase;
-      padding: 5px 11px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--white);
-      color: var(--muted);
-      cursor: pointer;
+    .tour-bar.active { display: flex; }
+    .tour-label { font-size: 11px; font-weight: 600; color: var(--green); flex: 1; }
+    .tour-step { font-size: 10px; color: var(--muted); }
+    .tour-stop {
+      font-size: 10px; font-weight: 600; padding: 3px 10px;
+      border-radius: 4px; border: 1px solid var(--border);
+      background: white; cursor: pointer; color: var(--muted);
       transition: all 0.15s;
+    }
+    .tour-stop:hover { color: #dc2626; border-color: #dc2626; }
+
+    /* Toolbar */
+    .viewer-toolbar {
+      display: flex; align-items: center; gap: 5px;
+      padding: 9px 14px; border-top: 1px solid var(--border);
+      flex-shrink: 0; flex-wrap: wrap;
+    }
+    .view-btn {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border);
+      background: var(--white); color: var(--muted); cursor: pointer; transition: all 0.15s;
     }
     .view-btn:hover { border-color: var(--green); color: var(--green); }
     .view-btn.active { background: var(--green); border-color: var(--green); color: white; }
-
     .toolbar-sep { flex: 1; }
+    .icon-btn {
+      width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--white); color: var(--muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+    }
+    .icon-btn:hover { border-color: var(--green); color: var(--green); }
+    .icon-btn svg { width: 13px; height: 13px; }
 
+    /* AR button */
     #ar-button {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.04em;
-      padding: 5px 13px;
-      border-radius: 6px;
-      border: 1px solid var(--green);
-      background: var(--green-lt);
-      color: var(--green);
-      cursor: pointer;
-      transition: all 0.15s;
+      font-size: 11px; font-weight: 600; padding: 5px 13px;
+      border-radius: 6px; border: 1px solid var(--green);
+      background: var(--green-lt); color: var(--green);
+      cursor: pointer; transition: all 0.15s;
       display: flex; align-items: center; gap: 5px;
     }
     #ar-button:hover { background: var(--green); color: white; }
+    #ar-prompt { display: none; }
+    .progress-bar { display: none; }
 
-    .ss-btn {
-      width: 30px; height: 30px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--white);
-      color: var(--muted);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-    }
-    .ss-btn:hover { border-color: var(--green); color: var(--green); }
-    .ss-btn svg { width: 14px; height: 14px; }
-
-    /* HOTSPOTS */
+    /* Hotspots */
     button.Hotspot {
-      background: rgba(255,255,255,0.95);
-      border: 1.5px solid var(--green);
-      border-radius: 50%;
-      width: 20px; height: 20px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.18);
-      transition: transform 0.15s;
-      padding: 0;
+      background: rgba(255,255,255,0.95); border: 1.5px solid var(--green);
+      border-radius: 50%; width: 20px; height: 20px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.2); transition: transform 0.15s; padding: 0;
       position: relative;
     }
-    button.Hotspot::before {
-      content: '';
-      width: 6px; height: 6px;
-      background: var(--green);
-      border-radius: 50%;
-    }
-    button.Hotspot:hover { transform: scale(1.25); }
-
+    button.Hotspot::before { content:''; width:6px; height:6px; background:var(--green); border-radius:50%; }
+    button.Hotspot:hover { transform: scale(1.3); }
     .HotspotAnnotation {
-      display: none;
-      position: absolute;
-      left: 26px;
-      top: 50%; transform: translateY(-50%);
-      background: rgba(10,10,10,0.82);
-      color: white;
-      font-size: 11px; font-weight: 500;
-      padding: 4px 9px;
-      border-radius: 5px;
-      white-space: nowrap;
-      pointer-events: none;
-      font-family: 'Inter', sans-serif;
-      z-index: 10;
+      display: none; position: absolute; left: 26px; top: 50%; transform: translateY(-50%);
+      background: rgba(17,24,39,0.88); color: white; font-size: 11px; font-weight: 500;
+      padding: 4px 10px; border-radius: 5px; white-space: nowrap;
+      pointer-events: none; font-family: 'Inter', sans-serif; z-index: 10;
     }
 
-    .progress-bar { display: none; }
-    #ar-prompt { display: none; }
-
-    /* RIGHT PANEL */
+    /* ── RIGHT PANEL ── */
     .right-panel {
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding-bottom: 18px;
+      overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px;
     }
     .right-panel::-webkit-scrollbar { width: 3px; }
     .right-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .right-panel > * { animation: fadeUp 0.35s ease both; }
+    .right-panel > *:nth-child(1){animation-delay:0.04s}
+    .right-panel > *:nth-child(2){animation-delay:0.08s}
+    .right-panel > *:nth-child(3){animation-delay:0.12s}
+    .right-panel > *:nth-child(4){animation-delay:0.16s}
+    .right-panel > *:nth-child(5){animation-delay:0.20s}
+    .right-panel > *:nth-child(6){animation-delay:0.24s}
+    .right-panel > *:nth-child(7){animation-delay:0.28s}
+    .right-panel > *:nth-child(8){animation-delay:0.32s}
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
-    /* PRODUCT HEADER */
+    /* ── PRODUCT HEADER ── */
     .product-header {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px 18px 18px;
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
     }
-    .product-super { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
-    .product-name  { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); }
-    .product-price-row { display: flex; align-items: baseline; gap: 8px; margin: 10px 0 6px; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-    .product-price { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
-    .product-price-sub { font-size: 12px; font-weight: 500; color: var(--muted); }
-    .product-availability { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--green); display: flex; align-items: center; gap: 5px; }
-    .avail-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
-    .product-sub   { font-size: 11px; color: var(--muted); line-height: 1.5; }
-    .rating-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
-    .stars { color: #f59e0b; font-size: 13px; letter-spacing: 1px; }
+    .product-super { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .product-name { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); }
+    .rating-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+    .stars { color: #f59e0b; font-size: 12px; }
     .rating-count { font-size: 11px; color: var(--muted); }
-    .cta-row { display: flex; gap: 8px; margin-top: 14px; }
-    .btn-primary { flex:1; padding: 11px 0; background: var(--green); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.18s; }
-    .btn-primary:hover { background: #0d6b0d; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,124,16,0.3); }
-    .btn-secondary { padding: 11px 14px; background: transparent; color: var(--text); border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.18s; }
-    .btn-secondary:hover { border-color: var(--green); color: var(--green); }
-    .feature-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
-    .feature-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 9px; border-radius: 4px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
-    .specs-table { width: 100%; border-collapse: collapse; }
-    .specs-table tr { border-bottom: 1px solid var(--border); }
-    .specs-table tr:last-child { border-bottom: none; }
-    .specs-table td { padding: 7px 0; font-size: 12px; vertical-align: top; }
-    .specs-table td:first-child { color: var(--muted); width: 45%; font-weight: 500; }
-    .specs-table td:last-child { font-weight: 500; color: var(--text); }
-
-    /* CARD */
-    .card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 15px 16px;
+    .price-row {
+      display: flex; align-items: center; gap: 8px;
+      margin: 12px 0 10px; padding: 10px 0;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
     }
-    .card-title {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 11px;
+    .price-main { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+    .price-sub { font-size: 12px; color: var(--muted); }
+    .avail { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--green); display: flex; align-items: center; gap: 5px; }
+    .avail-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.5)} }
+    .product-sub { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .feature-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+    .ftag { font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+    .cta-row { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-primary {
+      flex: 1; padding: 11px 0; background: var(--green); color: white;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; letter-spacing: 0.01em;
     }
+    .btn-primary:hover { background: var(--green-dk); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,124,16,0.3); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-icon {
+      padding: 11px 13px; background: transparent; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-icon:hover { border-color: var(--green); color: var(--green); }
+    .btn-icon svg { width: 15px; height: 15px; }
 
-    /* PILLS */
+    /* ── CARD ── */
+    .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 15px; box-shadow: var(--shadow); }
+    .card-title { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 11px; }
+
+    /* ── PILLS ── */
     .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
     .pill {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.04em; text-transform: uppercase;
-      padding: 5px 13px;
-      border-radius: 6px;
-      border: 1.5px solid var(--border);
-      background: var(--white);
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.15s;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+      padding: 5px 12px; border-radius: 6px; border: 1.5px solid var(--border);
+      background: var(--white); color: var(--text); cursor: pointer; transition: all 0.15s;
     }
     .pill:hover { border-color: var(--green); color: var(--green); }
     .pill.active { border-color: var(--green); background: var(--green); color: white; }
 
-    /* ANIM BTNS */
+    /* ── VIEW ANIMATION BUTTONS ── */
+    .vanim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .vanim-btn {
+      display: flex; flex-direction: column; align-items: flex-start;
+      gap: 3px; padding: 10px 11px;
+      border-radius: 8px; border: 1px solid var(--border);
+      background: var(--white); color: var(--text);
+      cursor: pointer; transition: all 0.18s; text-align: left;
+    }
+    .vanim-btn:hover { border-color: var(--green); background: var(--green-lt); }
+    .vanim-btn.running { border-color: var(--green); background: var(--green-lt); }
+    .vanim-title { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.2; }
+    .vanim-sub { font-size: 10px; color: var(--muted); line-height: 1.3; }
+    .vanim-btn:hover .vanim-title, .vanim-btn.running .vanim-title { color: var(--green); }
+
+    /* ── GLB ANIM BUTTONS ── */
     .anim-btn {
-      display: flex; align-items: center; gap: 9px;
-      width: 100%; padding: 8px 11px;
-      border-radius: 7px;
-      border: 1px solid var(--border);
-      background: var(--white);
-      color: var(--text);
-      font-size: 12px; font-weight: 500;
-      cursor: pointer; transition: all 0.15s;
-      text-align: left; margin-bottom: 5px;
+      display: flex; align-items: center; gap: 9px; width: 100%;
+      padding: 8px 11px; border-radius: 7px; border: 1px solid var(--border);
+      background: var(--white); color: var(--text); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; text-align: left; margin-bottom: 5px;
     }
     .anim-btn:last-child { margin-bottom: 0; }
     .anim-btn:hover { border-color: var(--green); color: var(--green); }
     .anim-btn.active { border-color: var(--green); background: var(--green-lt); color: var(--green); font-weight: 600; }
-    .anim-icon {
-      width: 22px; height: 22px; border-radius: 4px;
-      background: var(--border);
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
+    .anim-icon { width: 22px; height: 22px; border-radius: 4px; background: var(--bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .anim-btn.active .anim-icon { background: rgba(16,124,16,0.15); }
     .anim-icon svg { width: 10px; height: 10px; }
 
-    /* PLAYBACK */
-    .playback-bar {
-      display: flex; align-items: center; gap: 7px;
-      margin-top: 10px;
-    }
-    .play-btn {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: none; background: var(--green); color: white;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: opacity 0.15s;
-    }
+    .playback-bar { display: flex; align-items: center; gap: 7px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .play-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--green); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
     .play-btn:hover { opacity: 0.82; }
     .play-btn svg { width: 11px; height: 11px; }
-    .timeline {
-      flex: 1; -webkit-appearance: none;
-      height: 3px; background: var(--border); border-radius: 2px;
-      outline: none; cursor: pointer;
-    }
-    .timeline::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 12px; height: 12px;
-      background: var(--green); border-radius: 50%;
-    }
+    .timeline { flex: 1; -webkit-appearance: none; height: 3px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
+    .timeline::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--green); border-radius: 50%; }
     .time-lbl { font-size: 10px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .speed-pill {
-      font-size: 10px; font-weight: 700;
-      color: var(--muted); border: 1px solid var(--border);
-      border-radius: 4px; padding: 2px 6px;
-      cursor: pointer; background: transparent; transition: all 0.15s;
-    }
+    .speed-pill { font-size: 10px; font-weight: 700; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; cursor: pointer; background: transparent; transition: all 0.15s; }
     .speed-pill:hover { color: var(--green); border-color: var(--green); }
 
-    /* TOGGLES */
-    .toggle-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 7px 0; border-bottom: 1px solid var(--border);
-    }
+    /* ── TOGGLE ── */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
     .toggle-row:last-of-type { border-bottom: none; padding-bottom: 0; }
     .toggle-row:first-of-type { padding-top: 0; }
-    .toggle-lbl { font-size: 12px; font-weight: 500; }
+    .toggle-lbl { font-size: 12px; font-weight: 500; color: var(--text); }
     .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
     .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle-track {
-      position: absolute; inset: 0;
-      background: var(--border); border-radius: 999px;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .toggle-track::after {
-      content: ''; position: absolute;
-      top: 3px; left: 3px;
-      width: 14px; height: 14px;
-      background: white; border-radius: 50%;
-      transition: all 0.2s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
+    .toggle-track { position: absolute; inset: 0; background: var(--border); border-radius: 999px; cursor: pointer; transition: all 0.2s; }
+    .toggle-track::after { content:''; position:absolute; top:3px; left:3px; width:14px; height:14px; background:white; border-radius:50%; transition:all 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
     .toggle input:checked + .toggle-track { background: var(--green); }
     .toggle input:checked + .toggle-track::after { transform: translateX(16px); }
 
-    /* SLIDERS */
+    /* ── SLIDERS ── */
     .slider-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
     .slider-row:last-child { margin-bottom: 0; }
     .slider-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
-    input[type=range].ctrl-slider {
-      -webkit-appearance: none; width: 100%;
-      height: 3px; background: var(--border); border-radius: 2px;
-      outline: none; cursor: pointer;
-    }
-    input[type=range].ctrl-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 13px; height: 13px;
-      background: var(--green); border-radius: 50%;
-      box-shadow: 0 0 0 2px white, 0 0 0 3px var(--green);
-    }
+    input[type=range].ctrl-slider { -webkit-appearance: none; width: 100%; height: 3px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
+    input[type=range].ctrl-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 2px white, 0 0 0 3px var(--green); }
 
-    /* HOTSPOT ITEM */
-    .hotspot-item {
-      display: flex; align-items: center;
-      padding: 6px 0; border-bottom: 1px solid var(--border);
-      font-size: 12px;
-    }
+    /* ── HOTSPOT ITEMS ── */
+    .hotspot-item { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
     .hotspot-item:last-child { border-bottom: none; padding-bottom: 0; }
     .hotspot-item:first-child { padding-top: 0; }
     .hs-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
     .hs-name { flex: 1; font-weight: 500; }
-    .hs-toggle {
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.05em; text-transform: uppercase;
-      padding: 2px 8px; border-radius: 4px;
-      border: 1px solid var(--border);
-      background: transparent; color: var(--muted);
-      cursor: pointer; transition: all 0.15s;
-    }
+    .hs-toggle { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
     .hs-toggle.on { border-color: var(--green); color: var(--green); background: var(--green-lt); }
 
-    /* SECTION SUB HEADING */
-    .sub-head { font-size: 11px; font-weight: 500; color: var(--muted); margin-bottom: 6px; margin-top: 12px; }
-    .sub-head:first-child { margin-top: 0; }
+    /* ── SPECS ── */
+    .specs-table { width: 100%; border-collapse: collapse; }
+    .specs-table tr { border-bottom: 1px solid var(--border); }
+    .specs-table tr:last-child { border-bottom: none; }
+    .specs-table td { padding: 7px 0; font-size: 12px; vertical-align: top; }
+    .specs-table td:first-child { color: var(--muted); width: 44%; font-weight: 500; }
+    .specs-table td:last-child { font-weight: 500; color: var(--text); }
 
+    .sub-head { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; margin-top: 11px; }
+    .sub-head:first-child { margin-top: 0; }
     .empty { font-size: 12px; color: var(--muted); font-style: italic; }
 
-    /* SMOOTH COLOR TRANSITIONS */
-    model-viewer { transition: --progress-bar-color 0.3s; }
-
-    /* CARD ENTRANCE ANIMATION */
-    .right-panel .card,
-    .right-panel .product-header {
-      animation: fadeUp 0.4s ease both;
+    /* PHOTO GALLERY */
+    .photo-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+    .photo-thumb {
+      aspect-ratio: 1; border-radius: 7px; overflow: hidden;
+      border: 2px solid transparent; cursor: pointer; transition: all 0.18s;
+      background: var(--bg);
     }
-    .right-panel > *:nth-child(1) { animation-delay: 0.05s; }
-    .right-panel > *:nth-child(2) { animation-delay: 0.10s; }
-    .right-panel > *:nth-child(3) { animation-delay: 0.15s; }
-    .right-panel > *:nth-child(4) { animation-delay: 0.20s; }
-    .right-panel > *:nth-child(5) { animation-delay: 0.25s; }
-    .right-panel > *:nth-child(6) { animation-delay: 0.30s; }
-    .right-panel > *:nth-child(7) { animation-delay: 0.35s; }
-    .right-panel > *:nth-child(8) { animation-delay: 0.40s; }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .photo-thumb:hover { border-color: var(--green); transform: scale(1.03); }
+    .photo-thumb.active { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+    .photo-preview {
+      width: 100%; border-radius: 9px; overflow: hidden;
+      background: var(--bg); margin-bottom: 8px;
+      border: 1px solid var(--border);
     }
-
-    /* VIEWER CARD ENTRANCE */
-    .viewer-card { animation: fadeIn 0.5s ease both; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    /* COLOR FLASH on preset change */
-    .pill.active[data-preset] { position: relative; overflow: hidden; }
-    .pill.active[data-preset]::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: rgba(255,255,255,0.3);
-      animation: flash 0.3s ease;
-    }
-    @keyframes flash { from{opacity:1} to{opacity:0} }
+    .photo-preview img { width:100%; height:180px; object-fit:cover; display:block; transition: opacity 0.25s; }
 
     @media (max-width: 800px) {
       .layout { grid-template-columns: 1fr; grid-template-rows: 55vh auto; height: auto; overflow: visible; }
@@ -438,9 +322,16 @@
 
 <!-- HEADER -->
 <header>
-  <img src="xboxlogo.png" style="width:30px;height:30px;object-fit:contain;" alt="Xbox">
+  <img src="xboxlogo.png" style="width:28px;height:28px;object-fit:contain;" alt="Xbox">
   <span class="header-brand">Xbox</span>
   <div class="header-sep"></div>
+  <div class="header-actions">
+    <button class="hdr-btn" onclick="takeScreenshot()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Save Image
+    </button>
+    <button class="hdr-btn primary" onclick="document.getElementById('mv').activateAR()">View in AR</button>
+  </div>
 </header>
 
 <!-- LAYOUT -->
@@ -456,10 +347,8 @@
     <model-viewer
       id="mv"
       src="DVE_A2_Xbox_Controller.glb"
-      ar
-      ar-modes="webxr scene-viewer quick-look"
-      camera-controls
-      tone-mapping="neutral"
+      ar ar-modes="webxr scene-viewer quick-look"
+      camera-controls tone-mapping="neutral"
       poster="poster.webp"
       shadow-intensity="1"
       camera-orbit="2.51deg 70.67deg 0.343m"
@@ -467,87 +356,21 @@
       auto-rotate
       environment-image="neutral"
       exposure="1"
+      interpolation-decay="50"
     >
-      <!-- YOUR HOTSPOTS — preserved exactly -->
-      <button class="Hotspot" slot="hotspot-2"
-        data-position="-0.021369547088609952m 0.037948942787460874m 0.022995804327040504m"
-        data-normal="0m -0.1572628173236448m 0.9875567863608806m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-dpad">D-Pad</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-3"
-        data-position="-0.03566197009550828m 0.06618320686100472m 0.02265498352050787m"
-        data-normal="0m 0m 1m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-ls">Left Stick</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-4"
-        data-position="0.033321888787987114m 0.053146983624396474m 0.01920914860713805m"
-        data-normal="0.2881577330548296m 0.1809079845980502m 0.9403389931239549m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-a">Button A</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-5"
-        data-position="0.023836070408840393m 0.0624851633108922m 0.018907615580994106m"
-        data-normal="0.20395401144218403m 0.23627201091822864m 0.950041208618499m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-x">Button X</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-6"
-        data-position="0.03310591026475468m 0.07194346412173948m 0.014677132376601891m"
-        data-normal="0.2683796672006313m 0.3334239065729771m 0.9037703539942507m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-y">Button Y</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-8"
-        data-position="0.042449828139689144m 0.06367127630492785m 0.014101755750098048m"
-        data-normal="0.3963830613331855m 0.2180334239517897m 0.8918194294407312m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-b">Button B</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-9"
-        data-position="0.016219283264670203m 0.037995051001066746m 0.028000431060791017m"
-        data-normal="0m 0m 1m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-rs">Right Stick</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-10"
-        data-position="0.03546813098986268m 0.09761157170064179m -0.010139640555307423m"
-        data-normal="0.216958099725855m 0.8749077444901059m -0.4329730033091921m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-rb">RB Bumper</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-11"
-        data-position="0.035337548663441964m 0.09402227033390022m -0.022009187156431312m"
-        data-normal="0.06758674627815879m 0.9383728246149263m -0.3389520227874985m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-rt">RT Trigger</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-12"
-        data-position="-0.042901092578806393m 0.09693354890280358m -0.011516259588245729m"
-        data-normal="-0.3107460156526202m 0.8486905765998894m -0.42797338579235145m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-lb">LB Bumper</div>
-      </button>
-
-      <button class="Hotspot" slot="hotspot-13"
-        data-position="-0.04316425607068691m 0.09420229126085038m -0.020963149370683797m"
-        data-normal="-0.353379231947901m 0.9023694055757354m -0.24668314557100482m"
-        data-visibility-attribute="visible">
-        <div class="HotspotAnnotation" id="ann-lt">LT Trigger</div>
-      </button>
+      <button class="Hotspot" slot="hotspot-2" data-position="-0.021369547088609952m 0.037948942787460874m 0.022995804327040504m" data-normal="0m -0.1572628173236448m 0.9875567863608806m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-dpad">D-Pad</div></button>
+      <button class="Hotspot" slot="hotspot-3" data-position="-0.03566197009550828m 0.06618320686100472m 0.02265498352050787m" data-normal="0m 0m 1m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-ls">Left Stick</div></button>
+      <button class="Hotspot" slot="hotspot-4" data-position="0.033321888787987114m 0.053146983624396474m 0.01920914860713805m" data-normal="0.2881577330548296m 0.1809079845980502m 0.9403389931239549m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-a">Button A</div></button>
+      <button class="Hotspot" slot="hotspot-5" data-position="0.023836070408840393m 0.0624851633108922m 0.018907615580994106m" data-normal="0.20395401144218403m 0.23627201091822864m 0.950041208618499m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-x">Button X</div></button>
+      <button class="Hotspot" slot="hotspot-6" data-position="0.03310591026475468m 0.07194346412173948m 0.014677132376601891m" data-normal="0.2683796672006313m 0.3334239065729771m 0.9037703539942507m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-y">Button Y</div></button>
+      <button class="Hotspot" slot="hotspot-8" data-position="0.042449828139689144m 0.06367127630492785m 0.014101755750098048m" data-normal="0.3963830613331855m 0.2180334239517897m 0.8918194294407312m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-b">Button B</div></button>
+      <button class="Hotspot" slot="hotspot-9" data-position="0.016219283264670203m 0.037995051001066746m 0.028000431060791017m" data-normal="0m 0m 1m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-rs">Right Stick</div></button>
+      <button class="Hotspot" slot="hotspot-10" data-position="0.03546813098986268m 0.09761157170064179m -0.010139640555307423m" data-normal="0.216958099725855m 0.8749077444901059m -0.4329730033091921m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-rb">RB Bumper</div></button>
+      <button class="Hotspot" slot="hotspot-11" data-position="0.035337548663441964m 0.09402227033390022m -0.022009187156431312m" data-normal="0.06758674627815879m 0.9383728246149263m -0.3389520227874985m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-rt">RT Trigger</div></button>
+      <button class="Hotspot" slot="hotspot-12" data-position="-0.042901092578806393m 0.09693354890280358m -0.011516259588245729m" data-normal="-0.3107460156526202m 0.8486905765998894m -0.42797338579235145m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-lb">LB Bumper</div></button>
+      <button class="Hotspot" slot="hotspot-13" data-position="-0.04316425607068691m 0.09420229126085038m -0.020963149370683797m" data-normal="-0.353379231947901m 0.9023694055757354m -0.24668314557100482m" data-visibility-attribute="visible"><div class="HotspotAnnotation" id="ann-lt">LT Trigger</div></button>
 
       <div class="progress-bar hide" slot="progress-bar"><div class="update-bar"></div></div>
-
       <button slot="ar-button" id="ar-button">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         View in AR
@@ -555,33 +378,84 @@
       <div id="ar-prompt"><img src="ar_hand_prompt.png" alt=""></div>
     </model-viewer>
 
-    <!-- Camera view bar -->
+    <!-- Tour status bar (shows during auto-tour) -->
+    <div class="tour-bar" id="tour-bar">
+      <span class="tour-label" id="tour-label">● Auto Tour Running</span>
+      <span class="tour-step" id="tour-step">Step 1 / 8</span>
+      <button class="tour-stop" onclick="stopTour()">Stop</button>
+    </div>
+
+    <!-- Camera toolbar -->
     <div class="viewer-toolbar">
-      <button class="view-btn active" onclick="setView('default', this)">Default</button>
-      <button class="view-btn" onclick="setView('front',   this)">Front</button>
-      <button class="view-btn" onclick="setView('back',    this)">Back</button>
-      <button class="view-btn" onclick="setView('left',    this)">Left</button>
-      <button class="view-btn" onclick="setView('right',   this)">Right</button>
-      <button class="view-btn" onclick="setView('top',     this)">Top</button>
+      <button class="view-btn active" onclick="setView('default',this)">Default</button>
+      <button class="view-btn" onclick="setView('front',this)">Front</button>
+      <button class="view-btn" onclick="setView('back',this)">Back</button>
+      <button class="view-btn" onclick="setView('left',this)">Left</button>
+      <button class="view-btn" onclick="setView('right',this)">Right</button>
+      <button class="view-btn" onclick="setView('top',this)">Top</button>
       <div class="toolbar-sep"></div>
-      <button class="ss-btn" title="Screenshot" onclick="takeScreenshot()">
+      <button class="icon-btn" title="Screenshot" onclick="takeScreenshot()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </button>
+      <button class="icon-btn" title="Reset camera" onclick="setView('default',null)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       </button>
     </div>
   </div>
 
-  <!-- RIGHT — SCROLLABLE -->
+  <!-- RIGHT PANEL -->
   <div class="right-panel">
 
-    <!-- Product info -->
+    <!-- Product Header -->
     <div class="product-header">
-      <div class="product-super">Xbox</div>
+      <div class="product-super">Xbox · Series X|S</div>
       <div class="product-name">Wireless Controller</div>
-      <div style="font-size:22px;font-weight:700;color:var(--green);margin:6px 0 2px;">$59.99 USD</div>
-      <div class="product-sub">Series X|S · DVE A2 · Drag to rotate · Pinch to zoom</div>
+      <div class="rating-row">
+        <span class="stars">★★★★★</span>
+        <span class="rating-count">4.8 · 12,480 ratings</span>
+      </div>
+      <div class="price-row">
+        <span class="price-main">$59.99</span>
+        <span class="price-sub">USD</span>
+        <div class="avail"><div class="avail-dot"></div>In Stock</div>
+      </div>
+      <div class="product-sub">DVE A2 Edition &mdash; designed for Xbox Series X|S and Windows. Drag to rotate, pinch to zoom, tap dots to explore.</div>
+      <div class="feature-tags">
+        <span class="ftag">Bluetooth 5.0</span>
+        <span class="ftag">Xbox + PC</span>
+        <span class="ftag">USB-C</span>
+        <span class="ftag">Haptic Triggers</span>
+        <span class="ftag">Share Button</span>
+        <span class="ftag">Textured Grip</span>
+      </div>
+      <div class="cta-row">
+        <button class="btn-primary" onclick="addToCart()">Add to Cart</button>
+        <button class="btn-icon" title="Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
     </div>
 
-    <!-- Material Variants (GLB built-in, auto-populated) -->
+    <!-- Real Product Photos -->
+    <div class="card">
+      <div class="card-title">Product Photos</div>
+      <div class="photo-preview">
+        <img id="preview-img" src="photo_6124896455756549631_x.jpg" alt="Controller photo" onerror="this.style.display='none'">
+      </div>
+      <div class="photo-grid">
+        <div class="photo-thumb active" onclick="setPhoto(this,'photo_6124896455756549631_x.jpg')">
+          <img src="photo_6124896455756549631_x.jpg" alt="Front" onerror="this.parentElement.style.display='none'">
+        </div>
+        <div class="photo-thumb" onclick="setPhoto(this,'photo_6124896455756549630_m.jpg')">
+          <img src="photo_6124896455756549630_m.jpg" alt="Side" onerror="this.parentElement.style.display='none'">
+        </div>
+        <div class="photo-thumb" onclick="setPhoto(this,'photo_6124896455756549632_m.jpg')">
+          <img src="photo_6124896455756549632_m.jpg" alt="Detail" onerror="this.parentElement.style.display='none'">
+        </div>
+      </div>
+    </div>
+
+    <!-- Material Variants (GLB auto) -->
     <div class="card">
       <div class="card-title">Material Variants</div>
       <div class="pill-group" id="variant-pills">
@@ -595,23 +469,71 @@
       <div class="sub-head">Standard</div>
       <div class="pill-group" style="margin-bottom:10px;">
         <button class="pill active" data-preset="carbon"      onclick="applyPreset(this,'#1a1a1a','Carbon Black Edition')">Carbon</button>
-        <button class="pill"        data-preset="robot-white" onclick="applyPreset(this,'#e8e8e8','Robot White Edition')">Robot White</button>
-        <button class="pill"        data-preset="midnight"    onclick="applyPreset(this,'#0f0f1a','Midnight Special Edition')">Midnight</button>
+        <button class="pill"        data-preset="robot-white" onclick="applyPreset(this,'#e0e0e0','Robot White Edition')">Robot White</button>
+        <button class="pill"        data-preset="midnight"    onclick="applyPreset(this,'#0f0f1a','Midnight Edition')">Midnight</button>
       </div>
       <div class="sub-head">Special Editions</div>
       <div class="pill-group">
-        <button class="pill" data-preset="stellar"   onclick="applyPreset(this,'#2a1f4e','Stellar Shift Edition')">Stellar Shift</button>
-        <button class="pill" data-preset="volt"      onclick="applyPreset(this,'#cce000','Electric Volt Edition')">Electric Volt</button>
-        <button class="pill" data-preset="pulse-red" onclick="applyPreset(this,'#8b0000','Pulse Red Edition')">Pulse Red</button>
-        <button class="pill" data-preset="deep-pink" onclick="applyPreset(this,'#9c1458','Deep Pink Edition')">Deep Pink</button>
-        <button class="pill" data-preset="stormcloud"onclick="applyPreset(this,'#4a5568','Storm Cloud Edition')">Storm Cloud</button>
+        <button class="pill" data-preset="stellar"    onclick="applyPreset(this,'#2a1f4e','Stellar Shift')">Stellar Shift</button>
+        <button class="pill" data-preset="volt"       onclick="applyPreset(this,'#b8cc00','Electric Volt')">Electric Volt</button>
+        <button class="pill" data-preset="pulse-red"  onclick="applyPreset(this,'#8b0000','Pulse Red')">Pulse Red</button>
+        <button class="pill" data-preset="deep-pink"  onclick="applyPreset(this,'#9c1458','Deep Pink')">Deep Pink</button>
+        <button class="pill" data-preset="stormcloud" onclick="applyPreset(this,'#3d4f5c','Storm Cloud')">Storm Cloud</button>
       </div>
     </div>
 
-    <!-- Animations -->
+    <!-- VIEW ANIMATIONS — camera choreography, works without GLB animations -->
     <div class="card">
-      <div class="card-title">Animations</div>
-      <div id="anim-list"><span class="empty">No animations found in this model.</span></div>
+      <div class="card-title">View Animations</div>
+      <div class="vanim-grid">
+
+        <button class="vanim-btn" id="va-tour" onclick="runTour()">
+          <div class="vanim-title">🎬 Auto Tour</div>
+          <div class="vanim-sub">Full orbit showcase</div>
+        </button>
+
+        <button class="vanim-btn" id="va-explode" onclick="runExplodedTour()">
+          <div class="vanim-title">💥 Exploded View</div>
+          <div class="vanim-sub">Each part close-up</div>
+        </button>
+
+        <button class="vanim-btn" id="va-reveal" onclick="runDramaticReveal()">
+          <div class="vanim-title">✨ Reveal</div>
+          <div class="vanim-sub">Cinematic zoom-in</div>
+        </button>
+
+        <button class="vanim-btn" id="va-triggers" onclick="runTriggerInspect()">
+          <div class="vanim-title">🎯 Triggers</div>
+          <div class="vanim-sub">L2 · R2 close-up</div>
+        </button>
+
+        <button class="vanim-btn" id="va-buttons" onclick="runButtonInspect()">
+          <div class="vanim-title">🔵 Face Buttons</div>
+          <div class="vanim-sub">A · B · X · Y view</div>
+        </button>
+
+        <button class="vanim-btn" id="va-360" onclick="run360Scan()">
+          <div class="vanim-title">🔄 360° Scan</div>
+          <div class="vanim-sub">Slow full rotation</div>
+        </button>
+
+        <button class="vanim-btn" id="va-topdown" onclick="runTopDown()">
+          <div class="vanim-title">📐 Top Inspect</div>
+          <div class="vanim-sub">Bird's eye layout</div>
+        </button>
+
+        <button class="vanim-btn" id="va-backpanel" onclick="runBackPanel()">
+          <div class="vanim-title">🔩 Back Panel</div>
+          <div class="vanim-sub">Battery + grip detail</div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- GLB Animations (auto-populated if model has them) -->
+    <div class="card" id="glb-anim-card">
+      <div class="card-title">Model Animations</div>
+      <div id="anim-list"><span class="empty">Will auto-populate if your GLB has NLA animations.</span></div>
       <div class="playback-bar" id="playback-bar" style="display:none;">
         <button class="play-btn" onclick="togglePlay()">
           <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>
@@ -622,46 +544,46 @@
       </div>
     </div>
 
-    <!-- Button Label Controls -->
+    <!-- Button Labels -->
     <div class="card">
       <div class="card-title">Button Labels</div>
-      <div style="margin-bottom:10px;">
-        <div class="toggle-row">
-          <span class="toggle-lbl">Show All Labels</span>
-          <label class="toggle"><input type="checkbox" id="all-labels" onchange="toggleAllLabels(this.checked)"><div class="toggle-track"></div></label>
-        </div>
+      <div class="toggle-row" style="margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+        <span class="toggle-lbl">Show All</span>
+        <label class="toggle"><input type="checkbox" id="all-labels" onchange="toggleAllLabels(this.checked)"><div class="toggle-track"></div></label>
       </div>
       <div id="hotspot-list"></div>
     </div>
 
-    <!-- Display Settings -->
+    <!-- Display -->
     <div class="card">
       <div class="card-title">Display</div>
       <div class="toggle-row">
         <span class="toggle-lbl">Auto-Rotate</span>
-        <label class="toggle"><input type="checkbox" checked onchange="mv.autoRotate=this.checked"><div class="toggle-track"></div></label>
+        <label class="toggle"><input type="checkbox" id="autorotate" checked onchange="mv.autoRotate=this.checked"><div class="toggle-track"></div></label>
       </div>
       <div class="toggle-row">
         <span class="toggle-lbl">Drop Shadow</span>
         <label class="toggle"><input type="checkbox" checked onchange="mv.shadowIntensity=this.checked?1:0"><div class="toggle-track"></div></label>
       </div>
-      <div class="toggle-row" style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px;">
+      <div class="toggle-row">
         <span class="toggle-lbl">Interaction Prompt</span>
         <label class="toggle"><input type="checkbox" checked onchange="mv.interactionPrompt=this.checked?'auto':'none'"><div class="toggle-track"></div></label>
       </div>
-      <div class="slider-row">
-        <div class="slider-label"><span>Exposure</span><span id="exp-val">1.0</span></div>
-        <input type="range" class="ctrl-slider" min="0.2" max="2.5" step="0.1" value="1" oninput="setExposure(this.value)">
-      </div>
-      <div class="slider-row">
-        <div class="slider-label"><span>Shadow Intensity</span><span id="shd-val">1.0</span></div>
-        <input type="range" class="ctrl-slider" min="0" max="2" step="0.1" value="1" oninput="setShadow(this.value)">
+      <div style="margin-top:10px;">
+        <div class="slider-row">
+          <div class="slider-label"><span>Exposure</span><span id="exp-val">1.0</span></div>
+          <input type="range" class="ctrl-slider" min="0.2" max="2.5" step="0.1" value="1" oninput="setExposure(this.value)">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Shadow Intensity</span><span id="shd-val">1.0</span></div>
+          <input type="range" class="ctrl-slider" min="0" max="2" step="0.1" value="1" oninput="setShadow(this.value)">
+        </div>
       </div>
     </div>
 
     <!-- Environment -->
     <div class="card">
-      <div class="card-title">Environment Light</div>
+      <div class="card-title">Environment</div>
       <div class="pill-group">
         <button class="pill active" onclick="setEnv(this,'neutral')">Studio</button>
         <button class="pill" onclick="setEnv(this,'legacy')">Legacy</button>
@@ -675,22 +597,21 @@
       <div class="card-title">Specifications</div>
       <table class="specs-table">
         <tr><td>Connectivity</td><td>Bluetooth 5.0, USB-C, Xbox Wireless</td></tr>
-        <tr><td>Compatibility</td><td>Xbox Series X|S, Xbox One, Windows 10/11, Mobile</td></tr>
+        <tr><td>Compatibility</td><td>Xbox Series X|S, Xbox One, Windows 10/11</td></tr>
         <tr><td>Battery Life</td><td>Up to 40 hours (AA batteries)</td></tr>
-        <tr><td>Dimensions</td><td>150mm × 100mm × 65mm</td></tr>
+        <tr><td>Dimensions</td><td>150 × 100 × 65 mm</td></tr>
         <tr><td>Weight</td><td>287g (with batteries)</td></tr>
-        <tr><td>Special Features</td><td>Textured grip, Share button, Hybrid D-pad, USB-C</td></tr>
-        <tr><td>Haptic Feedback</td><td>Rumble motors × 2 + Trigger motors × 2</td></tr>
+        <tr><td>Haptics</td><td>Rumble × 2 + Trigger motors × 2</td></tr>
+        <tr><td>Special</td><td>Hybrid D-pad, Share button, Textured grip</td></tr>
       </table>
     </div>
 
-  </div><!-- /right-panel -->
-</div><!-- /layout -->
+  </div>
+</div>
 
 <script>
   const mv = document.getElementById('mv');
 
-  // Hotspot data matching your slots
   const HOTSPOTS = [
     { label: 'D-Pad',       ann: 'ann-dpad' },
     { label: 'Left Stick',  ann: 'ann-ls'   },
@@ -705,14 +626,13 @@
     { label: 'LT Trigger',  ann: 'ann-lt'   },
   ];
 
-  // ── ON LOAD ───────────────────────────────────────────────
   mv.addEventListener('load', () => {
     populateVariants();
     populateAnimations();
     buildHotspotList();
   });
 
-  // Hotspot hover show/hide
+  // Hotspot hover
   document.querySelectorAll('button.Hotspot').forEach(btn => {
     const ann = btn.querySelector('.HotspotAnnotation');
     if (!ann) return;
@@ -722,18 +642,14 @@
     });
   });
 
-  // ── HOTSPOT LIST ──────────────────────────────────────────
+  // ── HOTSPOT LIST ──
   function buildHotspotList() {
     const list = document.getElementById('hotspot-list');
     list.innerHTML = '';
     HOTSPOTS.forEach(h => {
       const row = document.createElement('div');
       row.className = 'hotspot-item';
-      row.innerHTML = `
-        <div class="hs-dot"></div>
-        <span class="hs-name">${h.label}</span>
-        <button class="hs-toggle" data-ann="${h.ann}" onclick="toggleHotspot(this)">Show</button>
-      `;
+      row.innerHTML = `<div class="hs-dot"></div><span class="hs-name">${h.label}</span><button class="hs-toggle" data-ann="${h.ann}" onclick="toggleHotspot(this)">Show</button>`;
       list.appendChild(row);
     });
   }
@@ -743,7 +659,7 @@
     if (!ann) return;
     const on = btn.classList.contains('on');
     ann.style.display = on ? 'none' : 'block';
-    btn.textContent   = on ? 'Show' : 'Hide';
+    btn.textContent = on ? 'Show' : 'Hide';
     btn.classList.toggle('on', !on);
   }
 
@@ -758,28 +674,32 @@
     });
   }
 
-  // ── CAMERA VIEWS ──────────────────────────────────────────
+  // ── CAMERA VIEWS ──
   const VIEWS = {
-    default: '2.51deg 70.67deg 0.343m',
-    front:   '0deg 75deg 0.35m',
-    back:    '180deg 75deg 0.35m',
-    left:    '-90deg 75deg 0.35m',
-    right:   '90deg 75deg 0.35m',
-    top:     '0deg 5deg 0.35m',
+    default: { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg' },
+    front:   { orbit: '0deg 80deg 0.36m',         fov: '28deg' },
+    back:    { orbit: '180deg 80deg 0.36m',        fov: '28deg' },
+    left:    { orbit: '-90deg 80deg 0.36m',        fov: '28deg' },
+    right:   { orbit: '90deg 80deg 0.36m',         fov: '28deg' },
+    top:     { orbit: '0deg 2deg 0.36m',           fov: '25deg' },
   };
 
   function setView(v, btn) {
-    mv.cameraOrbit = VIEWS[v];
-    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    const view = VIEWS[v] || VIEWS.default;
+    mv.cameraOrbit = view.orbit;
+    mv.fieldOfView = view.fov;
+    if (btn) {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
   }
 
-  // ── MATERIAL VARIANTS ─────────────────────────────────────
+  // ── MATERIAL VARIANTS ──
   function populateVariants() {
     const container = document.getElementById('variant-pills');
-    const variants  = mv.availableVariants;
+    const variants = mv.availableVariants;
     if (!variants || variants.length === 0) {
-      container.innerHTML = '<span class="empty">No variants in this GLB — use Colorway Presets above.</span>';
+      container.innerHTML = '<span class="empty">No GLB variants — use Colorway Presets below.</span>';
       return;
     }
     container.innerHTML = '';
@@ -797,47 +717,32 @@
     });
   }
 
-  // ── COLORWAY PRESETS ──────────────────────────────────────
-  function applyPreset(btn, hex, editionName) {
+  // ── COLORWAY PRESETS ──
+  function applyPreset(btn, hex, name) {
     document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('edition-label').textContent = editionName;
+    document.getElementById('edition-label').textContent = name + ' Edition';
     const model = mv.model;
     if (!model || !model.materials.length) return;
-    const [r, g, b2] = hexToRgb(hex);
-    model.materials[0].pbrMetallicRoughness.setBaseColorFactor([r, g, b2, 1]);
+    const [r,g,b] = [parseInt(hex.slice(1,3),16)/255, parseInt(hex.slice(3,5),16)/255, parseInt(hex.slice(5,7),16)/255];
+    model.materials[0].pbrMetallicRoughness.setBaseColorFactor([r,g,b,1]);
   }
 
-  function hexToRgb(hex) {
-    return [
-      parseInt(hex.slice(1,3),16)/255,
-      parseInt(hex.slice(3,5),16)/255,
-      parseInt(hex.slice(5,7),16)/255,
-    ];
-  }
-
-  // ── ANIMATIONS ────────────────────────────────────────────
+  // ── GLB ANIMATIONS ──
   let playing = false, rafId = null;
   const speeds = [0.25, 0.5, 1, 1.5, 2];
   let speedIdx = 2;
 
   function populateAnimations() {
-    const list  = document.getElementById('anim-list');
+    const list = document.getElementById('anim-list');
     const anims = mv.availableAnimations;
     if (!anims || anims.length === 0) return;
-
     list.innerHTML = '';
     document.getElementById('playback-bar').style.display = 'flex';
-
     anims.forEach((name, i) => {
       const btn = document.createElement('button');
       btn.className = 'anim-btn' + (i === 0 ? ' active' : '');
-      btn.innerHTML = `
-        <div class="anim-icon">
-          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>
-        </div>
-        <span>${name}</span>
-      `;
+      btn.innerHTML = `<div class="anim-icon"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg></div><span>${name}</span>`;
       btn.onclick = () => {
         document.querySelectorAll('.anim-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -846,7 +751,6 @@
       };
       list.appendChild(btn);
     });
-
     mv.animationName = anims[0];
     startPlay();
   }
@@ -876,51 +780,184 @@
   }
 
   function fmt(s) { return Math.floor(s/60)+':'+Math.floor(s%60).toString().padStart(2,'0'); }
-
-  function seekAnim(v)  { mv.currentTime = parseFloat(v)*(mv.duration||0); }
-
+  function seekAnim(v) { mv.currentTime = parseFloat(v)*(mv.duration||0); }
   function cycleSpeed() {
     speedIdx = (speedIdx+1) % speeds.length;
     mv.timeScale = speeds[speedIdx];
     document.getElementById('speed-btn').textContent = speeds[speedIdx]+'×';
   }
 
-  // ── DISPLAY ───────────────────────────────────────────────
+  // ── VIEW ANIMATION ENGINE ──
+  let tourTimer = null;
+  let activeTourBtn = null;
+
+  function stopTour() {
+    if (tourTimer) { clearTimeout(tourTimer); tourTimer = null; }
+    document.getElementById('tour-bar').classList.remove('active');
+    document.querySelectorAll('.vanim-btn').forEach(b => b.classList.remove('running'));
+    mv.autoRotate = document.getElementById('autorotate').checked;
+  }
+
+  function runSequence(steps, btnId, labelText) {
+    stopTour();
+    mv.autoRotate = false;
+    const bar = document.getElementById('tour-bar');
+    const lbl = document.getElementById('tour-label');
+    const stepEl = document.getElementById('tour-step');
+    bar.classList.add('active');
+    lbl.textContent = '● ' + labelText;
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.add('running');
+
+    let i = 0;
+    function next() {
+      if (i >= steps.length) { stopTour(); return; }
+      stepEl.textContent = `Step ${i+1} / ${steps.length}`;
+      const s = steps[i];
+      mv.cameraOrbit = s.orbit;
+      mv.fieldOfView = s.fov || '28deg';
+      if (s.label) lbl.textContent = '● ' + s.label;
+      i++;
+      tourTimer = setTimeout(next, s.duration || 2200);
+    }
+    next();
+  }
+
+  // 1. Auto Tour — full overview from all angles
+  function runTour() {
+    runSequence([
+      { orbit: '0deg 75deg 0.38m',   fov: '32deg', label: 'Front Face',       duration: 2500 },
+      { orbit: '45deg 65deg 0.34m',  fov: '28deg', label: 'Right Quarter',    duration: 2200 },
+      { orbit: '90deg 75deg 0.34m',  fov: '26deg', label: 'Right Side',       duration: 2200 },
+      { orbit: '160deg 70deg 0.36m', fov: '28deg', label: 'Rear View',        duration: 2500 },
+      { orbit: '225deg 75deg 0.34m', fov: '26deg', label: 'Left Side',        duration: 2200 },
+      { orbit: '315deg 65deg 0.34m', fov: '28deg', label: 'Left Quarter',     duration: 2200 },
+      { orbit: '0deg 10deg 0.36m',   fov: '25deg', label: 'Top Down',         duration: 2500 },
+      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Complete ✓', duration: 2000 },
+    ], 'va-tour', 'Auto Tour');
+  }
+
+  // 2. Exploded View — zoom into each component zone
+  function runExplodedTour() {
+    runSequence([
+      { orbit: '-90deg 75deg 0.22m',  fov: '18deg', label: 'Left Grip Zone',    duration: 2800 },
+      { orbit: '-60deg 85deg 0.20m',  fov: '16deg', label: 'D-Pad & Left Stick', duration: 2800 },
+      { orbit: '-10deg 78deg 0.20m',  fov: '15deg', label: 'Center / Guide Button', duration: 2800 },
+      { orbit: '30deg 78deg 0.20m',   fov: '15deg', label: 'A·B·X·Y Cluster',   duration: 2800 },
+      { orbit: '90deg 75deg 0.22m',   fov: '18deg', label: 'Right Grip Zone',   duration: 2800 },
+      { orbit: '-30deg 100deg 0.22m', fov: '18deg', label: 'L2 Trigger Detail', duration: 2800 },
+      { orbit: '30deg 100deg 0.22m',  fov: '18deg', label: 'R2 Trigger Detail', duration: 2800 },
+      { orbit: '180deg 75deg 0.24m',  fov: '20deg', label: 'Battery Compartment', duration: 2800 },
+      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Exploded Tour Complete ✓', duration: 2000 },
+    ], 'va-explode', 'Exploded View Tour');
+  }
+
+  // 3. Dramatic Reveal
+  function runDramaticReveal() {
+    runSequence([
+      { orbit: '180deg 90deg 0.60m',  fov: '40deg', label: 'Reveal Starting…',   duration: 1200 },
+      { orbit: '120deg 80deg 0.45m',  fov: '34deg', label: 'Coming Into View',    duration: 1400 },
+      { orbit: '60deg 74deg 0.36m',   fov: '28deg', label: 'Approaching…',        duration: 1400 },
+      { orbit: '10deg 70deg 0.28m',   fov: '22deg', label: 'Close Detail',        duration: 2500 },
+      { orbit: '-20deg 68deg 0.26m',  fov: '20deg', label: 'Intimate View',       duration: 2000 },
+      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Reveal Complete ✓', duration: 2000 },
+    ], 'va-reveal', 'Dramatic Reveal');
+  }
+
+  // 4. Trigger Inspect
+  function runTriggerInspect() {
+    runSequence([
+      { orbit: '-30deg 102deg 0.24m', fov: '17deg', label: 'L1 Bumper',         duration: 2800 },
+      { orbit: '-35deg 108deg 0.22m', fov: '15deg', label: 'L2 Trigger Face',   duration: 2800 },
+      { orbit: '35deg 108deg 0.22m',  fov: '15deg', label: 'R2 Trigger Face',   duration: 2800 },
+      { orbit: '30deg 102deg 0.24m',  fov: '17deg', label: 'R1 Bumper',         duration: 2800 },
+      { orbit: '0deg 95deg 0.26m',    fov: '20deg', label: 'Both Triggers',     duration: 2500 },
+      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',        duration: 1800 },
+    ], 'va-triggers', 'Trigger Inspection');
+  }
+
+  // 5. Face Button Inspect
+  function runButtonInspect() {
+    runSequence([
+      { orbit: '35deg 72deg 0.22m',   fov: '16deg', label: 'Button A (Green)',  duration: 2800 },
+      { orbit: '45deg 65deg 0.22m',   fov: '15deg', label: 'Button B (Red)',    duration: 2800 },
+      { orbit: '28deg 78deg 0.20m',   fov: '14deg', label: 'Button X (Blue)',   duration: 2800 },
+      { orbit: '22deg 68deg 0.20m',   fov: '14deg', label: 'Button Y (Yellow)', duration: 2800 },
+      { orbit: '30deg 72deg 0.26m',   fov: '20deg', label: 'Full Cluster',      duration: 2500 },
+      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',        duration: 1800 },
+    ], 'va-buttons', 'Face Button Inspection');
+  }
+
+  // 6. 360 Scan — slow full orbit
+  function run360Scan() {
+    runSequence([
+      { orbit: '0deg 75deg 0.34m',    fov: '27deg', label: '360° Scan — 0°',   duration: 1500 },
+      { orbit: '45deg 75deg 0.34m',   fov: '27deg', label: '360° Scan — 45°',  duration: 1500 },
+      { orbit: '90deg 75deg 0.34m',   fov: '27deg', label: '360° Scan — 90°',  duration: 1500 },
+      { orbit: '135deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 135°', duration: 1500 },
+      { orbit: '180deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 180°', duration: 1500 },
+      { orbit: '225deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 225°', duration: 1500 },
+      { orbit: '270deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 270°', duration: 1500 },
+      { orbit: '315deg 75deg 0.34m',  fov: '27deg', label: '360° Scan — 315°', duration: 1500 },
+      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: '360° Complete ✓', duration: 1800 },
+    ], 'va-360', '360° Scan');
+  }
+
+  // 7. Top Down Inspection
+  function runTopDown() {
+    runSequence([
+      { orbit: '0deg 5deg 0.36m',     fov: '24deg', label: 'Top Layout',        duration: 3000 },
+      { orbit: '-45deg 8deg 0.34m',   fov: '22deg', label: 'Left Side Top',     duration: 2500 },
+      { orbit: '45deg 8deg 0.34m',    fov: '22deg', label: 'Right Side Top',    duration: 2500 },
+      { orbit: '0deg 30deg 0.32m',    fov: '22deg', label: 'Angled Top',        duration: 2500 },
+      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',        duration: 1800 },
+    ], 'va-topdown', 'Top Inspection');
+  }
+
+  // 8. Back Panel
+  function runBackPanel() {
+    runSequence([
+      { orbit: '180deg 75deg 0.34m',  fov: '26deg', label: 'Rear Face',         duration: 2800 },
+      { orbit: '180deg 85deg 0.28m',  fov: '22deg', label: 'Battery Cover',     duration: 2800 },
+      { orbit: '160deg 80deg 0.26m',  fov: '20deg', label: 'Left Grip Texture', duration: 2800 },
+      { orbit: '200deg 80deg 0.26m',  fov: '20deg', label: 'Right Grip Texture',duration: 2800 },
+      { orbit: '180deg 92deg 0.28m',  fov: '22deg', label: 'Bottom Detail',     duration: 2800 },
+      { orbit: '2.51deg 70.67deg 0.343m', fov: '30deg', label: 'Done ✓',        duration: 1800 },
+    ], 'va-backpanel', 'Back Panel Inspection');
+  }
+
+  // ── DISPLAY ──
   function setEnv(btn, val) {
     mv.environmentImage = val;
     btn.closest('.pill-group').querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
   }
+  function setExposure(v) { mv.exposure = parseFloat(v); document.getElementById('exp-val').textContent = parseFloat(v).toFixed(1); }
+  function setShadow(v) { mv.shadowIntensity = parseFloat(v); document.getElementById('shd-val').textContent = parseFloat(v).toFixed(1); }
 
-  function setExposure(v) {
-    mv.exposure = parseFloat(v);
-    document.getElementById('exp-val').textContent = parseFloat(v).toFixed(1);
-  }
-
-  function setShadow(v) {
-    mv.shadowIntensity = parseFloat(v);
-    document.getElementById('shd-val').textContent = parseFloat(v).toFixed(1);
-  }
-
-  // ── ADD TO CART FEEDBACK ─────────────────────────────────
+  // ── ADD TO CART ──
   function addToCart() {
     const btn = document.querySelector('.btn-primary');
-    const orig = btn.textContent;
-    btn.textContent = '✓ Added!';
-    btn.style.background = '#0d6b0d';
+    btn.textContent = '✓ Added to Cart';
+    btn.style.background = '#0a5a0a';
     btn.disabled = true;
-    setTimeout(() => {
-      btn.textContent = orig;
-      btn.style.background = '';
-      btn.disabled = false;
-    }, 2000);
+    setTimeout(() => { btn.textContent = 'Add to Cart'; btn.style.background = ''; btn.disabled = false; }, 2500);
   }
 
-  // ── SCREENSHOT ────────────────────────────────────────────
+  // ── PHOTO GALLERY ──
+  function setPhoto(thumb, src) {
+    document.querySelectorAll('.photo-thumb').forEach(t => t.classList.remove('active'));
+    thumb.classList.add('active');
+    const preview = document.getElementById('preview-img');
+    preview.style.opacity = '0';
+    setTimeout(() => { preview.src = src; preview.style.opacity = '1'; }, 200);
+  }
+
+  // ── SCREENSHOT ──
   async function takeScreenshot() {
     const blob = await mv.toBlob({ idealAspect: true });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
     a.href = url; a.download = 'xbox-controller.png'; a.click();
     URL.revokeObjectURL(url);
   }

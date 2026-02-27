@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Xbox Controller — 3D Viewer</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:    #107c10;
+      --green-lt: #e8f5e8;
+      --text:     #1a1a1a;
+      --muted:    #6b7280;
+      --border:   #e5e7eb;
+      --bg:       #f3f4f6;
+      --white:    #ffffff;
+      --radius:   10px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    /* HEADER */
+    header {
+      height: 56px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 10px;
+    }
+
+    .xbox-logo {
+      width: 26px; height: 26px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .xbox-logo svg { width: 14px; height: 14px; fill: white; }
+
+    .header-brand { font-size: 15px; font-weight: 600; }
+    .header-sep { flex: 1; }
+    .header-tag {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--green);
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      padding: 18px 22px;
+      height: calc(100vh - 56px);
+    }
+
+    /* VIEWER CARD */
+    .viewer-card {
+      background: var(--white);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .viewer-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .edition-badge {
+      font-size: 11px; font-weight: 600;
+      color: var(--green);
+      border: 1.5px solid var(--green);
+      border-radius: 999px;
+      padding: 3px 12px;
+    }
+
+    model-viewer {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      --progress-bar-color: var(--green);
+      --progress-bar-height: 2px;
+    }
+
+    /* VIEW TOOLBAR */
+    .viewer-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 9px 14px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .view-btn {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 5px 11px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .view-btn:hover { border-color: var(--green); color: var(--green); }
+    .view-btn.active { background: var(--green); border-color: var(--green); color: white; }
+
+    .toolbar-sep { flex: 1; }
+
+    #ar-button {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 5px 13px;
+      border-radius: 6px;
+      border: 1px solid var(--green);
+      background: var(--green-lt);
+      color: var(--green);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    #ar-button:hover { background: var(--green); color: white; }
+
+    .ss-btn {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .ss-btn:hover { border-color: var(--green); color: var(--green); }
+    .ss-btn svg { width: 14px; height: 14px; }
+
+    /* HOTSPOTS */
+    button.Hotspot {
+      background: rgba(255,255,255,0.95);
+      border: 1.5px solid var(--green);
+      border-radius: 50%;
+      width: 20px; height: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.18);
+      transition: transform 0.15s;
+      padding: 0;
+      position: relative;
+    }
+    button.Hotspot::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+    }
+    button.Hotspot:hover { transform: scale(1.25); }
+
+    .HotspotAnnotation {
+      display: none;
+      position: absolute;
+      left: 26px;
+      top: 50%; transform: translateY(-50%);
+      background: rgba(10,10,10,0.82);
+      color: white;
+      font-size: 11px; font-weight: 500;
+      padding: 4px 9px;
+      border-radius: 5px;
+      white-space: nowrap;
+      pointer-events: none;
+      font-family: 'Inter', sans-serif;
+      z-index: 10;
+    }
+
+    .progress-bar { display: none; }
+    #ar-prompt { display: none; }
+
+    /* RIGHT PANEL */
+    .right-panel {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 18px;
+    }
+    .right-panel::-webkit-scrollbar { width: 3px; }
+    .right-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* PRODUCT HEADER */
+    .product-header {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .product-super { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .product-name  { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+    .product-sub   { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* CARD */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px 16px;
+    }
+    .card-title {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 11px;
+    }
+
+    /* PILLS */
+    .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 5px 13px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pill:hover { border-color: var(--green); color: var(--green); }
+    .pill.active { border-color: var(--green); background: var(--green); color: white; }
+
+    /* ANIM BTNS */
+    .anim-btn {
+      display: flex; align-items: center; gap: 9px;
+      width: 100%; padding: 8px 11px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--text);
+      font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+      text-align: left; margin-bottom: 5px;
+    }
+    .anim-btn:last-child { margin-bottom: 0; }
+    .anim-btn:hover { border-color: var(--green); color: var(--green); }
+    .anim-btn.active { border-color: var(--green); background: var(--green-lt); color: var(--green); font-weight: 600; }
+    .anim-icon {
+      width: 22px; height: 22px; border-radius: 4px;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .anim-btn.active .anim-icon { background: rgba(16,124,16,0.15); }
+    .anim-icon svg { width: 10px; height: 10px; }
+
+    /* PLAYBACK */
+    .playback-bar {
+      display: flex; align-items: center; gap: 7px;
+      margin-top: 10px;
+    }
+    .play-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: none; background: var(--green); color: white;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.15s;
+    }
+    .play-btn:hover { opacity: 0.82; }
+    .play-btn svg { width: 11px; height: 11px; }
+    .timeline {
+      flex: 1; -webkit-appearance: none;
+      height: 3px; background: var(--border); border-radius: 2px;
+      outline: none; cursor: pointer;
+    }
+    .timeline::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px; height: 12px;
+      background: var(--green); border-radius: 50%;
+    }
+    .time-lbl { font-size: 10px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .speed-pill {
+      font-size: 10px; font-weight: 700;
+      color: var(--muted); border: 1px solid var(--border);
+      border-radius: 4px; padding: 2px 6px;
+      cursor: pointer; background: transparent; transition: all 0.15s;
+    }
+    .speed-pill:hover { color: var(--green); border-color: var(--green); }
+
+    /* TOGGLES */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 0; border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-of-type { border-bottom: none; padding-bottom: 0; }
+    .toggle-row:first-of-type { padding-top: 0; }
+    .toggle-lbl { font-size: 12px; font-weight: 500; }
+    .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--border); border-radius: 999px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .toggle-track::after {
+      content: ''; position: absolute;
+      top: 3px; left: 3px;
+      width: 14px; height: 14px;
+      background: white; border-radius: 50%;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle input:checked + .toggle-track { background: var(--green); }
+    .toggle input:checked + .toggle-track::after { transform: translateX(16px); }
+
+    /* SLIDERS */
+    .slider-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+    .slider-row:last-child { margin-bottom: 0; }
+    .slider-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+    input[type=range].ctrl-slider {
+      -webkit-appearance: none; width: 100%;
+      height: 3px; background: var(--border); border-radius: 2px;
+      outline: none; cursor: pointer;
+    }
+    input[type=range].ctrl-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px;
+      background: var(--green); border-radius: 50%;
+      box-shadow: 0 0 0 2px white, 0 0 0 3px var(--green);
+    }
+
+    /* HOTSPOT ITEM */
+    .hotspot-item {
+      display: flex; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .hotspot-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .hotspot-item:first-child { padding-top: 0; }
+    .hs-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+    .hs-name { flex: 1; font-weight: 500; }
+    .hs-toggle {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .hs-toggle.on { border-color: var(--green); color: var(--green); background: var(--green-lt); }
+
+    /* SECTION SUB HEADING */
+    .sub-head { font-size: 11px; font-weight: 500; color: var(--muted); margin-bottom: 6px; margin-top: 12px; }
+    .sub-head:first-child { margin-top: 0; }
+
+    .empty { font-size: 12px; color: var(--muted); font-style: italic; }
+
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; grid-template-rows: 55vh auto; height: auto; overflow: visible; }
+      .right-panel { max-height: none; overflow-y: visible; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="xbox-logo">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.5 14.5V10l5.5 3.25-5.5 3.25z"/></svg>
+  </div>
+  <span class="header-brand">Xbox</span>
+  <div class="header-sep"></div>
+  <span class="header-tag">3D Configurator</span>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT — VIEWER -->
+  <div class="viewer-card">
+    <div class="viewer-header">
+      <span class="viewer-label">3D Preview</span>
+      <span class="edition-badge" id="edition-label">Carbon Black Edition</span>
+    </div>
+
+    <model-viewer
+      id="mv"
+      src="DVE_A2_Xbox_Controller.glb"
+      ar
+      ar-modes="webxr scene-viewer quick-look"
+      camera-controls
+      tone-mapping="neutral"
+      poster="poster.webp"
+      shadow-intensity="1"
+      camera-orbit="2.51deg 70.67deg 0.343m"
+      field-of-view="30deg"
+      auto-rotate
+      environment-image="neutral"
+      exposure="1"
+    >
+      <!-- YOUR HOTSPOTS — preserved exactly -->
+      <button class="Hotspot" slot="hotspot-2"
+        data-position="-0.021369547088609952m 0.037948942787460874m 0.022995804327040504m"
+        data-normal="0m -0.1572628173236448m 0.9875567863608806m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-dpad">D-Pad</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-3"
+        data-position="-0.03566197009550828m 0.06618320686100472m 0.02265498352050787m"
+        data-normal="0m 0m 1m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-ls">Left Stick</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-4"
+        data-position="0.033321888787987114m 0.053146983624396474m 0.01920914860713805m"
+        data-normal="0.2881577330548296m 0.1809079845980502m 0.9403389931239549m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-a">Button A</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-5"
+        data-position="0.023836070408840393m 0.0624851633108922m 0.018907615580994106m"
+        data-normal="0.20395401144218403m 0.23627201091822864m 0.950041208618499m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-x">Button X</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-6"
+        data-position="0.03310591026475468m 0.07194346412173948m 0.014677132376601891m"
+        data-normal="0.2683796672006313m 0.3334239065729771m 0.9037703539942507m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-y">Button Y</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-8"
+        data-position="0.042449828139689144m 0.06367127630492785m 0.014101755750098048m"
+        data-normal="0.3963830613331855m 0.2180334239517897m 0.8918194294407312m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-b">Button B</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-9"
+        data-position="0.016219283264670203m 0.037995051001066746m 0.028000431060791017m"
+        data-normal="0m 0m 1m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-rs">Right Stick</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-10"
+        data-position="0.03546813098986268m 0.09761157170064179m -0.010139640555307423m"
+        data-normal="0.216958099725855m 0.8749077444901059m -0.4329730033091921m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-rb">RB Bumper</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-11"
+        data-position="0.035337548663441964m 0.09402227033390022m -0.022009187156431312m"
+        data-normal="0.06758674627815879m 0.9383728246149263m -0.3389520227874985m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-rt">RT Trigger</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-12"
+        data-position="-0.042901092578806393m 0.09693354890280358m -0.011516259588245729m"
+        data-normal="-0.3107460156526202m 0.8486905765998894m -0.42797338579235145m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-lb">LB Bumper</div>
+      </button>
+
+      <button class="Hotspot" slot="hotspot-13"
+        data-position="-0.04316425607068691m 0.09420229126085038m -0.020963149370683797m"
+        data-normal="-0.353379231947901m 0.9023694055757354m -0.24668314557100482m"
+        data-visibility-attribute="visible">
+        <div class="HotspotAnnotation" id="ann-lt">LT Trigger</div>
+      </button>
+
+      <div class="progress-bar hide" slot="progress-bar"><div class="update-bar"></div></div>
+
+      <button slot="ar-button" id="ar-button">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        View in AR
+      </button>
+      <div id="ar-prompt"><img src="ar_hand_prompt.png" alt=""></div>
+    </model-viewer>
+
+    <!-- Camera view bar -->
+    <div class="viewer-toolbar">
+      <button class="view-btn active" onclick="setView('default', this)">Default</button>
+      <button class="view-btn" onclick="setView('front',   this)">Front</button>
+      <button class="view-btn" onclick="setView('back',    this)">Back</button>
+      <button class="view-btn" onclick="setView('left',    this)">Left</button>
+      <button class="view-btn" onclick="setView('right',   this)">Right</button>
+      <button class="view-btn" onclick="setView('top',     this)">Top</button>
+      <div class="toolbar-sep"></div>
+      <button class="ss-btn" title="Screenshot" onclick="takeScreenshot()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT — SCROLLABLE -->
+  <div class="right-panel">
+
+    <!-- Product info -->
+    <div class="product-header">
+      <div class="product-super">Xbox</div>
+      <div class="product-name">Wireless Controller</div>
+      <div class="product-sub">Series X|S · DVE A2 · Drag to rotate · Pinch to zoom</div>
+    </div>
+
+    <!-- Material Variants (GLB built-in, auto-populated) -->
+    <div class="card">
+      <div class="card-title">Material Variants</div>
+      <div class="pill-group" id="variant-pills">
+        <span class="empty">Loading model…</span>
+      </div>
+    </div>
+
+    <!-- Colorway Presets -->
+    <div class="card">
+      <div class="card-title">Colorway Presets</div>
+      <div class="sub-head">Standard</div>
+      <div class="pill-group" style="margin-bottom:10px;">
+        <button class="pill active" data-preset="carbon"      onclick="applyPreset(this,'#1a1a1a','Carbon Black Edition')">Carbon</button>
+        <button class="pill"        data-preset="robot-white" onclick="applyPreset(this,'#e8e8e8','Robot White Edition')">Robot White</button>
+        <button class="pill"        data-preset="midnight"    onclick="applyPreset(this,'#0f0f1a','Midnight Special Edition')">Midnight</button>
+      </div>
+      <div class="sub-head">Special Editions</div>
+      <div class="pill-group">
+        <button class="pill" data-preset="stellar"   onclick="applyPreset(this,'#2a1f4e','Stellar Shift Edition')">Stellar Shift</button>
+        <button class="pill" data-preset="volt"      onclick="applyPreset(this,'#cce000','Electric Volt Edition')">Electric Volt</button>
+        <button class="pill" data-preset="pulse-red" onclick="applyPreset(this,'#8b0000','Pulse Red Edition')">Pulse Red</button>
+        <button class="pill" data-preset="deep-pink" onclick="applyPreset(this,'#9c1458','Deep Pink Edition')">Deep Pink</button>
+        <button class="pill" data-preset="stormcloud"onclick="applyPreset(this,'#4a5568','Storm Cloud Edition')">Storm Cloud</button>
+      </div>
+    </div>
+
+    <!-- Animations -->
+    <div class="card">
+      <div class="card-title">Animations</div>
+      <div id="anim-list"><span class="empty">No animations found in this model.</span></div>
+      <div class="playback-bar" id="playback-bar" style="display:none;">
+        <button class="play-btn" onclick="togglePlay()">
+          <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>
+        </button>
+        <input type="range" class="timeline" id="timeline" min="0" max="1" step="0.001" value="0" oninput="seekAnim(this.value)">
+        <span class="time-lbl" id="time-cur">0:00</span>
+        <button class="speed-pill" id="speed-btn" onclick="cycleSpeed()">1×</button>
+      </div>
+    </div>
+
+    <!-- Button Label Controls -->
+    <div class="card">
+      <div class="card-title">Button Labels</div>
+      <div style="margin-bottom:10px;">
+        <div class="toggle-row">
+          <span class="toggle-lbl">Show All Labels</span>
+          <label class="toggle"><input type="checkbox" id="all-labels" onchange="toggleAllLabels(this.checked)"><div class="toggle-track"></div></label>
+        </div>
+      </div>
+      <div id="hotspot-list"></div>
+    </div>
+
+    <!-- Display Settings -->
+    <div class="card">
+      <div class="card-title">Display</div>
+      <div class="toggle-row">
+        <span class="toggle-lbl">Auto-Rotate</span>
+        <label class="toggle"><input type="checkbox" checked onchange="mv.autoRotate=this.checked"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-lbl">Drop Shadow</span>
+        <label class="toggle"><input type="checkbox" checked onchange="mv.shadowIntensity=this.checked?1:0"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row" style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px;">
+        <span class="toggle-lbl">Interaction Prompt</span>
+        <label class="toggle"><input type="checkbox" checked onchange="mv.interactionPrompt=this.checked?'auto':'none'"><div class="toggle-track"></div></label>
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Exposure</span><span id="exp-val">1.0</span></div>
+        <input type="range" class="ctrl-slider" min="0.2" max="2.5" step="0.1" value="1" oninput="setExposure(this.value)">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Shadow Intensity</span><span id="shd-val">1.0</span></div>
+        <input type="range" class="ctrl-slider" min="0" max="2" step="0.1" value="1" oninput="setShadow(this.value)">
+      </div>
+    </div>
+
+    <!-- Environment -->
+    <div class="card">
+      <div class="card-title">Environment Light</div>
+      <div class="pill-group">
+        <button class="pill active" onclick="setEnv(this,'neutral')">Studio</button>
+        <button class="pill" onclick="setEnv(this,'legacy')">Legacy</button>
+        <button class="pill" onclick="setEnv(this,'https://modelviewer.dev/shared-assets/environments/spruit_sunrise_1k_HDR.hdr')">Outdoor</button>
+        <button class="pill" onclick="setEnv(this,'https://modelviewer.dev/shared-assets/environments/pillars_1k.hdr')">City</button>
+      </div>
+    </div>
+
+  </div><!-- /right-panel -->
+</div><!-- /layout -->
+
+<script>
+  const mv = document.getElementById('mv');
+
+  // Hotspot data matching your slots
+  const HOTSPOTS = [
+    { label: 'D-Pad',       ann: 'ann-dpad' },
+    { label: 'Left Stick',  ann: 'ann-ls'   },
+    { label: 'Button A',    ann: 'ann-a'    },
+    { label: 'Button X',    ann: 'ann-x'    },
+    { label: 'Button Y',    ann: 'ann-y'    },
+    { label: 'Button B',    ann: 'ann-b'    },
+    { label: 'Right Stick', ann: 'ann-rs'   },
+    { label: 'RB Bumper',   ann: 'ann-rb'   },
+    { label: 'RT Trigger',  ann: 'ann-rt'   },
+    { label: 'LB Bumper',   ann: 'ann-lb'   },
+    { label: 'LT Trigger',  ann: 'ann-lt'   },
+  ];
+
+  // ── ON LOAD ───────────────────────────────────────────────
+  mv.addEventListener('load', () => {
+    populateVariants();
+    populateAnimations();
+    buildHotspotList();
+  });
+
+  // Hotspot hover show/hide
+  document.querySelectorAll('button.Hotspot').forEach(btn => {
+    const ann = btn.querySelector('.HotspotAnnotation');
+    if (!ann) return;
+    btn.addEventListener('mouseenter', () => ann.style.display = 'block');
+    btn.addEventListener('mouseleave', () => {
+      if (!document.getElementById('all-labels').checked) ann.style.display = 'none';
+    });
+  });
+
+  // ── HOTSPOT LIST ──────────────────────────────────────────
+  function buildHotspotList() {
+    const list = document.getElementById('hotspot-list');
+    list.innerHTML = '';
+    HOTSPOTS.forEach(h => {
+      const row = document.createElement('div');
+      row.className = 'hotspot-item';
+      row.innerHTML = `
+        <div class="hs-dot"></div>
+        <span class="hs-name">${h.label}</span>
+        <button class="hs-toggle" data-ann="${h.ann}" onclick="toggleHotspot(this)">Show</button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function toggleHotspot(btn) {
+    const ann = document.getElementById(btn.dataset.ann);
+    if (!ann) return;
+    const on = btn.classList.contains('on');
+    ann.style.display = on ? 'none' : 'block';
+    btn.textContent   = on ? 'Show' : 'Hide';
+    btn.classList.toggle('on', !on);
+  }
+
+  function toggleAllLabels(show) {
+    HOTSPOTS.forEach(h => {
+      const ann = document.getElementById(h.ann);
+      if (ann) ann.style.display = show ? 'block' : 'none';
+    });
+    document.querySelectorAll('.hs-toggle').forEach(btn => {
+      btn.textContent = show ? 'Hide' : 'Show';
+      show ? btn.classList.add('on') : btn.classList.remove('on');
+    });
+  }
+
+  // ── CAMERA VIEWS ──────────────────────────────────────────
+  const VIEWS = {
+    default: '2.51deg 70.67deg 0.343m',
+    front:   '0deg 75deg 0.35m',
+    back:    '180deg 75deg 0.35m',
+    left:    '-90deg 75deg 0.35m',
+    right:   '90deg 75deg 0.35m',
+    top:     '0deg 5deg 0.35m',
+  };
+
+  function setView(v, btn) {
+    mv.cameraOrbit = VIEWS[v];
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ── MATERIAL VARIANTS ─────────────────────────────────────
+  function populateVariants() {
+    const container = document.getElementById('variant-pills');
+    const variants  = mv.availableVariants;
+    if (!variants || variants.length === 0) {
+      container.innerHTML = '<span class="empty">No variants in this GLB — use Colorway Presets above.</span>';
+      return;
+    }
+    container.innerHTML = '';
+    variants.forEach((v, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'pill' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = () => {
+        container.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        mv.variantName = v;
+        document.getElementById('edition-label').textContent = v;
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  // ── COLORWAY PRESETS ──────────────────────────────────────
+  function applyPreset(btn, hex, editionName) {
+    document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('edition-label').textContent = editionName;
+    const model = mv.model;
+    if (!model || !model.materials.length) return;
+    const [r, g, b2] = hexToRgb(hex);
+    model.materials[0].pbrMetallicRoughness.setBaseColorFactor([r, g, b2, 1]);
+  }
+
+  function hexToRgb(hex) {
+    return [
+      parseInt(hex.slice(1,3),16)/255,
+      parseInt(hex.slice(3,5),16)/255,
+      parseInt(hex.slice(5,7),16)/255,
+    ];
+  }
+
+  // ── ANIMATIONS ────────────────────────────────────────────
+  let playing = false, rafId = null;
+  const speeds = [0.25, 0.5, 1, 1.5, 2];
+  let speedIdx = 2;
+
+  function populateAnimations() {
+    const list  = document.getElementById('anim-list');
+    const anims = mv.availableAnimations;
+    if (!anims || anims.length === 0) return;
+
+    list.innerHTML = '';
+    document.getElementById('playback-bar').style.display = 'flex';
+
+    anims.forEach((name, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'anim-btn' + (i === 0 ? ' active' : '');
+      btn.innerHTML = `
+        <div class="anim-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>
+        </div>
+        <span>${name}</span>
+      `;
+      btn.onclick = () => {
+        document.querySelectorAll('.anim-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        mv.animationName = name;
+        startPlay();
+      };
+      list.appendChild(btn);
+    });
+
+    mv.animationName = anims[0];
+    startPlay();
+  }
+
+  function startPlay() {
+    mv.play({ repetitions: Infinity });
+    playing = true;
+    document.getElementById('play-icon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    tick();
+  }
+
+  function togglePlay() {
+    if (playing) {
+      mv.pause(); playing = false;
+      cancelAnimationFrame(rafId);
+      document.getElementById('play-icon').innerHTML = '<polygon points="5 3 19 12 5 21"/>';
+    } else { startPlay(); }
+  }
+
+  function tick() {
+    const dur = mv.duration || 0, cur = mv.currentTime || 0;
+    if (dur > 0) {
+      document.getElementById('timeline').value = cur / dur;
+      document.getElementById('time-cur').textContent = fmt(cur) + ' / ' + fmt(dur);
+    }
+    if (playing) rafId = requestAnimationFrame(tick);
+  }
+
+  function fmt(s) { return Math.floor(s/60)+':'+Math.floor(s%60).toString().padStart(2,'0'); }
+
+  function seekAnim(v)  { mv.currentTime = parseFloat(v)*(mv.duration||0); }
+
+  function cycleSpeed() {
+    speedIdx = (speedIdx+1) % speeds.length;
+    mv.timeScale = speeds[speedIdx];
+    document.getElementById('speed-btn').textContent = speeds[speedIdx]+'×';
+  }
+
+  // ── DISPLAY ───────────────────────────────────────────────
+  function setEnv(btn, val) {
+    mv.environmentImage = val;
+    btn.closest('.pill-group').querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function setExposure(v) {
+    mv.exposure = parseFloat(v);
+    document.getElementById('exp-val').textContent = parseFloat(v).toFixed(1);
+  }
+
+  function setShadow(v) {
+    mv.shadowIntensity = parseFloat(v);
+    document.getElementById('shd-val').textContent = parseFloat(v).toFixed(1);
+  }
+
+  // ── SCREENSHOT ────────────────────────────────────────────
+  async function takeScreenshot() {
+    const blob = await mv.toBlob({ idealAspect: true });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'xbox-controller.png'; a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>

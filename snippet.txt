@@ -1,0 +1,35 @@
+<model-viewer src="DVE_A2_Xbox_Controller.glb" ar ar-modes="webxr scene-viewer quick-look" camera-controls tone-mapping="neutral" poster="poster.webp" shadow-intensity="1" camera-orbit="2.51deg 70.67deg 0.343m" field-of-view="30deg" auto-rotate>
+    <button class="Hotspot" slot="hotspot-2" data-position="-0.021369547088609952m 0.037948942787460874m 0.022995804327040504m" data-normal="0m -0.1572628173236448m 0.9875567863608806m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">Dpad
+        </div>
+    </button><button class="Hotspot" slot="hotspot-3" data-position="-0.03566197009550828m 0.06618320686100472m 0.02265498352050787m" data-normal="0m 0m 1m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">LeftStick</div>
+    </button><button class="Hotspot" slot="hotspot-4" data-position="0.033321888787987114m 0.053146983624396474m 0.01920914860713805m" data-normal="0.2881577330548296m 0.1809079845980502m 0.9403389931239549m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">ButtonA</div>
+    </button><button class="Hotspot" slot="hotspot-5" data-position="0.023836070408840393m 0.0624851633108922m 0.018907615580994106m" data-normal="0.20395401144218403m 0.23627201091822864m 0.950041208618499m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">ButtonX</div>
+    </button><button class="Hotspot" slot="hotspot-6" data-position="0.03310591026475468m 0.07194346412173948m 0.014677132376601891m" data-normal="0.2683796672006313m 0.3334239065729771m 0.9037703539942507m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">ButtonY</div>
+    </button><button class="Hotspot" slot="hotspot-8" data-position="0.042449828139689144m 0.06367127630492785m 0.014101755750098048m" data-normal="0.3963830613331855m 0.2180334239517897m 0.8918194294407312m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">ButtonB</div>
+    </button><button class="Hotspot" slot="hotspot-9" data-position="0.016219283264670203m 0.037995051001066746m 0.028000431060791017m" data-normal="0m 0m 1m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">RightStick</div>
+    </button><button class="Hotspot" slot="hotspot-10" data-position="0.03546813098986268m 0.09761157170064179m -0.010139640555307423m" data-normal="0.216958099725855m 0.8749077444901059m -0.4329730033091921m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">R1Bumper</div>
+    </button><button class="Hotspot" slot="hotspot-11" data-position="0.035337548663441964m 0.09402227033390022m -0.022009187156431312m" data-normal="0.06758674627815879m 0.9383728246149263m -0.3389520227874985m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">R2Triggetr</div>
+    </button><button class="Hotspot" slot="hotspot-12" data-position="-0.042901092578806393m 0.09693354890280358m -0.011516259588245729m" data-normal="-0.3107460156526202m 0.8486905765998894m -0.42797338579235145m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">L1Bumper</div>
+    </button><button class="Hotspot" slot="hotspot-13" data-position="-0.04316425607068691m 0.09420229126085038m -0.020963149370683797m" data-normal="-0.353379231947901m 0.9023694055757354m -0.24668314557100482m" data-visibility-attribute="visible">
+        <div class="HotspotAnnotation">L2Trigger</div>
+    </button>
+    <div class="progress-bar hide" slot="progress-bar">
+        <div class="update-bar"></div>
+    </div>
+    <button slot="ar-button" id="ar-button">
+        View in your space
+    </button>
+    <div id="ar-prompt">
+        <img src="https://modelviewer.dev/shared-assets/icons/hand.png">
+    </div>
+</model-viewer>
